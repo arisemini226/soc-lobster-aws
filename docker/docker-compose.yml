@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  #---------------------------------------
+  # Wazuh — EDR + 日誌收集
+  #---------------------------------------
+  wazuh:
+    image: wazuh/wazuh:4.9.0
+    container_name: soc-wazuh
+    hostname: wazuh
+    restart: unless-stopped
+    ports:
+      - "55000:55000"
+    networks:
+      - soc_net
+
+  #---------------------------------------
+  # Grafana — 儀表板
+  #---------------------------------------
+  grafana:
+    image: grafana/grafana:10.3.0
+    container_name: soc-grafana
+    hostname: grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    networks:
+      - soc_net
+
+  #---------------------------------------
+  # Nginx — 反向代理
+  #---------------------------------------
+  nginx:
+    image: nginx:1.25-alpine
+    container_name: soc-nginx
+    hostname: nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - grafana
+      - wazuh
+    networks:
+      - soc_net
+
+networks:
+  soc_net:
+    driver: bridge

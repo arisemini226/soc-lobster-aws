@@ -1,73 +1,117 @@
-# SOC Lobster - AI 資安自動化 on AWS
+# SOC 龍蝦系統 — AI 資安自動化 on AWS Lightsail
 
-> 兩隻龍蝦協作：協調者（小黑）+ 執行者（Hermes），用 AI Agent 自動化 SOC 維運
+> 用兩隻龍蝦協作：協調者（小黑）+ 執行者（Hermes），用 AI Agent 自動化 SOC 維運
 
 ## 🐉 兩隻龍蝦架構
 
 ```
-用戶（Telegram）
-    ↓
-┌─────────────────┐      ┌─────────────────┐
-│ 小黑（Zeabur）   │ ←──→ │ Hermes（AWS）   │
-│ 協調者          │      │ 執行者         │
-│ AI + 指令解析   │      │ AWS CLI + 資安  │
-└─────────────────┘      └─────────────────┘
+用戶（你）
+    ↓ Telegram / LINE
+┌─────────────────┐      ┌─────────────────────────────┐
+│ 小黑隊長（Zeabur）│ ←──→ │ Hermes（AWS Lightsail）     │
+│ 協調、規劃、回覆  │      │ 執行 AWS 命令、資安腳本      │
+└─────────────────┘      └─────────────────────────────┘
+                                   ↓
+                          串接 Bedrock AI
 ```
 
-## 🚀 快速啟動
+## 🚀 快速啟動（12 分鐘完成）
 
-```bash
-# 1. 在 AWS 建立 IAM User：soc-operator（AdministratorAccess）
+### Step 1：建立 Lightsail 執行個體（5 分鐘）
 
-# 2. 設定 AWS credentials
-export AWS_ACCESS_KEY_ID="AKIA..."
-export AWS_SECRET_ACCESS_KEY="..."
-
-# 3. 執行 Terraform
-cd terraform
-terraform init
-terraform plan
-terraform apply
-
-# 4. SSH 到 EC2 安裝 OpenClaw
-ssh -i soc-key-pair.pem ec2-user@<IP>
-curl -fsSL https://openclaw.ai/install.sh | bash
 ```
+1. 登入 https://lightsail.aws.amazon.com
+2. 選擇區域：Tokyo (ap-northeast-1)
+3. 建立執行個體：
+   - 平台：Linux/Unix
+   - 藍圖：OpenClaw ⭐
+   - 規格：4GB RAM（推薦）或 2GB（實驗用）
+4. 命名：soc-hermes
+5. 等待狀態變成「執行中」（約 2-3 分鐘）
+```
+
+### Step 2：設定 Bedrock IAM（2 分鐘）
+
+```
+1. 在 Lightsail 執行個體頁面，選擇「入門」標籤
+2. 找到「啟用 Amazon Bedrock」區塊
+3. 點「複製指令碼」→「啟動 CloudShell」
+4. 貼上指令碼，按 Enter
+5. 出現「完成」就 ok 了
+```
+
+### Step 3：連接 Telegram（3 分鐘）
+
+```
+1. 去 Telegram @BotFather 建立新 Bot
+   → /newbot → 命名 → 拿 token
+
+2. SSH 到 Lightsail（在網頁裡直接點「使用 SSH 連線」）
+   執行：openclaw channels add
+   選擇 Telegram，貼上 Bot Token
+
+3. 允許你的 Telegram ID（從允許清單設定）
+```
+
+### Step 4：設定我（小黑）能控制 Hermes
+
+```
+把你的 Lightsail SSH 連線資訊告訴我，
+我就可以 SSH 進去用 CLI 控制 Hermes。
+```
+
+---
 
 ## 📁 專案結構
 
 ```
-aws-soc/
-├── terraform/          # IaC（EC2、VPC、IAM、S3、GuardDuty）
-├── docker/             # Docker Compose（Wazuh、Grafana、OpenSearch）
-├── scripts/            # 自動化腳本
-├── lambda/             # Lambda 資安回應
-└── docs/              # 文件
+soc-lobster-aws/
+├── docs/
+│   ├── IMPLEMENTATION.md     ← 實作手册（Lightsail 版）
+│   ├── ARCHITECTURE.md       ← 架構说明
+│   ├── QUICK_REFERENCE.md    ← 快速指令卡
+│   └── ARCHITECTURE.md       ← 燈龍蝦溝通方式
+├── scripts/
+│   ├── start.sh             ← 開機（省錢恢复）
+│   ├── stop.sh              ← 停機（省錢）
+│   ├── destroy.sh           ← 刪除乾淨（不再需要時）
+│   ├── status.sh            ← 狀態查詢
+│   ├── hourly_summary.sh    ← 每小時資安摘要
+│   ├── cve_update.sh        ← CVE 情資更新
+│   └── security_snapshot.sh  ← 自動化快照
+├── terraform/
+│   └── security_services.tf ← GuardDuty + Security Hub + Lambda（可選）
+├── docker/
+│   └── docker-compose.yml   ← Docker 服務（實驗用）
+└── README.md
 ```
 
 ## 🎯 功能
 
 - ✅ 每小時資安摘要（Telegram）
 - ✅ CVE 情資自動更新
-- ✅ Terraform plan → approve → apply
 - ✅ 自動化快照 + Human-in-the-loop 審批
 - ✅ GuardDuty → EventBridge → Lambda 自動化鏈
+- ✅ Bedrock AI（Claude）直接用，無需 API Key
+- ✅ Stop/Start 省錢模式
 
-## 💰 成本
+## 💰 成本（實驗模式）
 
-| 服務 | 預估 |
-|------|------|
-| EC2 (m5.large) | ~$70/月 |
-| S3 + CloudWatch | ~$10/月 |
-| **總計** | **~$80/月** |
+| 模式 | 規格 | 成本/小時 | 成本/月 |
+|------|------|-----------|---------|
+| 執行中 | 4GB RAM | $0.017 | ~$12 |
+| 執行中 | 2GB RAM | $0.009 | ~$7 |
+| **停機（只留 EBS）** | 80GB SSD | ~$0.004 | ~$3 |
 
-## 📚 文件
+**實驗模式：~$7-12/月（停機時 $3/月）**
 
-- [IMPLEMENTATION.md](docs/IMPLEMENTATION.md) - 完整實作手册
-- [SOC_Runbook.md](docs/SOC_Runbook.md) - 資安自動化劇本
-- [QUICK_REFERENCE.md](docs/QUICK_REFERENCE.md) - 快速指令卡
+## ⚡ 下一步
+
+1. 建立 Lightsail 執行個體
+2. 拿到 Access Key ID + Secret
+3. 我幫你測試 SSH 控制
 
 ---
 
-*Built with OpenClaw + AWS + ❤️*
+*Built with OpenClaw + AWS Lightsail + ❤️*
 *Author: Arisemini226 / 小黑 ⚡*

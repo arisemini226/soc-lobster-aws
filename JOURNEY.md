@@ -187,6 +187,56 @@ soc-lobster-aws/
 
 ---
 
+## 🔧 Bedrock IAM 設定（2 分鐘）
+
+> 讓 Hermes（Lightsail 上的 OpenClaw）能夠使用 Amazon Bedrock AI
+
+### Step 1：開啟 Lightsail Console
+
+```
+https://lightsail.aws.amazon.com
+```
+
+### Step 2：選擇執行個體
+
+點 **soc-hermes-new**
+
+### Step 3：進入「入門」標籤
+
+在執行個體頁面上方
+
+### Step 4：啟用 Amazon Bedrock
+
+找到區塊：
+```
+啟用 Amazon Bedrock 做為模型提供者
+```
+
+### Step 5：複製指令碼 → 啟動 CloudShell
+
+1. 點「複製指令碼」
+2. 點「啟動 CloudShell」
+
+### Step 6：在 CloudShell 貼上並執行
+
+```bash
+# 貼上後按 Enter
+bash <貼上的指令碼>
+
+# 出現「完成」就 ok 了
+```
+
+### Step 7：如果第一次用 Claude（Sonnet）
+
+需要在 Bedrock Console 申請一次存取（很簡單）：
+
+1. 開啟：https://console.aws.amazon.com/bedrock/
+2. 導航到「模型目錄」
+3. 選 Anthropic Claude
+4. 填表單提交（按幾個鈕就完成）
+
+---
+
 ## 📊 技術棧
 
 | 服務 | 用途 |

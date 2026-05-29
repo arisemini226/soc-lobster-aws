@@ -1,0 +1,3 @@
+=== Pre-commit hook installation test ===
+Commit exit code: 1
+Hook blocks secret pattern: YES

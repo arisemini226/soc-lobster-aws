@@ -1,0 +1,2 @@
+origin	https://github.com/arisemini226/soc-lobster-aws.git (fetch)
+origin	https://github.com/arisemini226/soc-lobster-aws.git (push)
